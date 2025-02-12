@@ -31,62 +31,35 @@ To determine the five assignments with the highest total donation values, catego
 ### 1.1. Calculating Total Donations per Assignment by Donor Type
 First, we calculate the total donation amount for each assignment, grouped by donor type:
 
-WITH total_donations AS(
-	SELECT ds.assignment_id,
-	       d.donor_type,
-	       ROUND(SUM(ds.amount), 2) AS total_amount
-	FROM donations AS ds
-	JOIN donors AS d
-	ON ds.donor_id = d.donor_id
-	GROUP BY assignment_id, donor_type
-)
+![](first1.png)
+
 This creates a temporary table (**total_donations**) where each assignment is mapped to its donor type and total donation amount.
 
 ### 1.2. Retrieving the Top 5 Assignments Based on Total Donations
 Next, we retrieve assignment details and select the top five based on total donation amounts:
 
-SELECT a.assignment_name,
-       a.region,
-       td.total_amount AS rounded_total_donation_amount,
-       donor_type
-FROM total_donations AS td
-JOIN assignments AS a
-ON td.assignment_id = a.assignment_id
-ORDER BY rounded_total_donation_amount DESC
-LIMIT 5;
+![](first2.png)
+
 This ensures we get only the **top five assignments** with the **highest donation values**, sorted in descending order.
 
 #### Output:
 A table listing the top five assignments, their regions, total donation amounts (rounded), and donor types.
 
-11
+![](first3.png)
 
-### 2: Identifying the Highest Impact Assignment per Region
+### 2. Identifying the Highest Impact Assignment per Region
 To find the assignment with the highest impact score in each region (ensuring each has received at least one donation), we break the query into multiple steps:
 ### 2.1. Counting Total Donations per Assignment
 First, we count the total number of donations received by each assignment:
 
-WITH total_donations AS(
-	SELECT assignment_id,
-	       COUNT(donation_id) AS total_amount
-	FROM donations
-	GROUP BY assignment_id
-)
+![](second1.png)
+
 This creates a temporary table (total_donations) where each assignment is mapped to its total number of donations.
 
 ### 2.2. Ranking Assignments by Impact Score within Each Region
 Next, we assign a ranking to each assignment within its region, ordering them by impact score in descending order:
 
-assign_rank AS(
-	SELECT a.assignment_name,
-	       a.region,
-	       a.impact_score,
-	       td.total_amount,
-	       ROW_NUMBER() OVER(PARTITION BY a.region ORDER BY a.impact_score DESC) AS ranking
-	FROM assignments AS a
-	JOIN total_donations as td ON a.assignment_id = td.assignment_id
-	WHERE td.total_amount > 0
-)
+![](second2.png)
 
 - Use PARTITION BY a.region to group assignments by region.
 - Order assignments within each region by impact_score DESC.
@@ -95,18 +68,13 @@ assign_rank AS(
 ### 2.3. Selecting the Top-Ranked Assignment per Region
 Finally, we filter the highest-ranked assignment per region and sort the results:
 
-SELECT assignment_name,
-       region,
-       impact_score,
-       total_amount AS num_total_donations
-FROM assign_rank
-WHERE ranking = 1
-ORDER BY region ASC;
+![](second3.png)
+
 This ensures that only the highest-impact assignment for each region is included in the final output.
 
-Output:
+#### Output:
 
-24
+![](second4.png)
 
 ## Results
 - **Top Donations**: The highest-funded assignment (**Assignment_3033**) received significant contributions (**$3840.66**) from **individual donors**
